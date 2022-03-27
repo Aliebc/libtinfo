@@ -1,15 +1,14 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<unistd.h>
 #include<tinfo.h>
 
 int main(){
     THUINFO_USER *exp=tinfo_user_init();
     char usr[1024];
-    char pwd[1024];
     printf("--%s--\n请输入您的用户名:",tinfo_version);
     scanf("%s",usr);
-    printf("请输入您的密码:");
-    scanf("%s",pwd);
+    char * pwd=getpass("请输入您的密码:");
     int x=tinfo_setopt(exp,THUACCOUNT_USERNAME,usr);
     int y=tinfo_setopt(exp,THUACCOUNT_PASSWORD,pwd);
     if(x!=0||y!=0){

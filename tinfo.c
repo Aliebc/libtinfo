@@ -171,6 +171,7 @@ char * URLEncode(char * from){
     char * ret=(char *)TINFO_MALLOC(STRING_STDSIZE*2);
     if(ret==NULL){
         return NULL;
+    }else{
     }
     return NULL;
 }
@@ -287,7 +288,7 @@ struct THUINFO_ACCOUNT * tinfo_verify(struct THUINFO_USER * ACCOUNT){
     curl_easy_setopt(tinfo1,CURLOPT_USERAGENT,USER_AGENT);
     curl_easy_setopt(tinfo1,CURLOPT_POST,1);
     char pf[STRING_STDSIZE*2];
-    sprintf(pf,"username=%s&password=%s",ACCOUNT->username,ACCOUNT->password);
+    sprintf(pf,"username=%s&password=%s",curl_easy_escape(tinfo1,ACCOUNT->username,0),curl_easy_escape(tinfo1,ACCOUNT->password,0));
     curl_easy_setopt(tinfo1,CURLOPT_POSTFIELDS,pf);
     curl_easy_setopt(tinfo1,CURLOPT_SSL_VERIFYPEER,0);
     curl_easy_setopt(tinfo1,CURLOPT_HEADERFUNCTION,tinfo_curl2memory_findcookie);
