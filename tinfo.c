@@ -316,6 +316,7 @@ struct THUINFO_ACCOUNT * tinfo_verify(struct THUINFO_USER * ACCOUNT){
     headers=curl_slist_append(headers,tinfo1_header.memory);
     curl_easy_setopt(tinfo2,CURLOPT_HTTPHEADER,headers);
     curl_easy_setopt(tinfo2, CURLOPT_WRITEFUNCTION,tinfo_curl2memory);
+    curl_easy_setopt(tinfo2,CURLOPT_SSL_VERIFYPEER,0);
     curl_easy_setopt(tinfo2, CURLOPT_WRITEDATA, (void *)&tinfo2_body);
     st=curl_easy_perform(tinfo2);
     if(st!=CURLE_OK){
