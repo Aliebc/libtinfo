@@ -76,6 +76,8 @@ struct THUINFO_ACCOUNT
 
 /*tinfo标准错误文字化函数,用于输出错误的字符串形式,调用后会归零错误码*/
 EXPORT char * tinfo_strerrno(void);
+/*本函数用于关闭回显地获取密码,最长获取64位密码*/
+EXPORT char * tinfo_getpass(const char * __prompt);
 /*本函数用于初始化账户信息,为储存账户信息的变量分配内存*/
 EXPORT struct THUINFO_USER * tinfo_user_init(void);
 /*本函数用于设置账户的详细信息*/

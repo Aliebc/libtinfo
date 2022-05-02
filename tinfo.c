@@ -1,9 +1,14 @@
 #include<stdlib.h>
 #include<stdio.h>
+#include<unistd.h>
 #include<string.h>
 #include<curl/curl.h>
 #include<tinfo.h>
 #include<cJSON.h>
+
+#ifdef WIN32
+#include <conio.h>
+#endif
 
 /*目标平台检测*/
 #ifdef __MACH__
@@ -83,6 +88,35 @@ void * TINFO_REALLOC(void *ptr,int SIZE){
     }else{
         return ret;
     }
+}
+
+char * tinfo_getpass(const char * __prompt){
+    #ifdef WIN32
+    #include <conio.h>
+    #define PASS_LEN_MAX 64
+    printf("%s", __prompt);
+    static char __pwd[PASS_LEN_MAX]={0};
+    char * __ptr = __pwd;
+    while(__ptr < __pwd + PASS_LEN_MAX){
+        *__ptr=getch();
+        if(*__ptr==13){
+            printf("\n");
+            break;
+        }
+        if(*__ptr=='\b'){
+            *__ptr='\0';
+            if(__ptr > __pwd){
+                __ptr--;
+            }
+        }else{
+            __ptr++;
+        }
+    }
+    *__ptr='\0';
+    return __pwd;
+    #else
+    return getpass(__prompt);
+    #endif
 }
 
 struct THUINFO_USER * tinfo_user_init(){
