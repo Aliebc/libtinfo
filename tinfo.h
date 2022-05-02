@@ -87,8 +87,103 @@ EXPORT char * tinfo_stringfy(struct THUINFO_ACCOUNT * ACCOUNT);
 /*本函数用于回收空间,处理完毕后调用本函数释放内存*/
 EXPORT int tinfo_clear(void * point);
 
+#ifdef __cplusplus
+}
+#endif
+
 /*库函数定义部分结束*/
 
+/*C++部分*/
+
+#ifdef __cplusplus
+
+#include <iostream>
+#include <stdlib.h>
+#include <string.h>
+
+#define ERROR_x1 "It hasn't been validated yet"
+#define STR_SIZE 1024
+
+class tinfo
+{
+private:
+    THUINFO_USER user;
+    THUINFO_ACCOUNT account;
+    char * str;
+public:
+    int status;
+    //tinfo();
+    tinfo(char * usr,char * pwd);
+    int verify();
+    char * toString();
+    friend std::ostream & operator<< (std::ostream & cout, const tinfo &ti);
+    ~tinfo();
+};
+
+/*tinfo::tinfo()
+{
+    
+}*/
+
+/*构造函数,所需参数为用户名和密码*/
+tinfo::tinfo(char * usr,char * pwd)
+{
+    this->status=-1;
+    this->user.username=(char *)malloc((strlen(usr)+1)*sizeof(char));
+    memcpy(this->user.username,usr,(strlen(usr)+1)*sizeof(char));
+    this->user.password=(char *)malloc((strlen(pwd)+1)*sizeof(char));
+    memcpy(this->user.password,pwd,(strlen(pwd)+1)*sizeof(char));
+    this->str=(char *)malloc((STR_SIZE+1)*sizeof(char));
+}
+
+/*析构函数,自动释放内存*/
+tinfo::~tinfo()
+{
+    free(this->user.username);
+    free(this->user.password);
+    free(this->str);
+}
+
+int tinfo::verify()
+{
+    TINFO_ACCOUNT * test=tinfo_verify(&this->user);
+    if(test==NULL){
+        this->status=-2;
+    }else{
+        this->account=*test;
+        this->status=0;
+    }
+    return this->status;
+}
+
+char * tinfo::toString()
+{
+    switch (this->status)
+    {
+    case -1:
+        strcpy(str,ERROR_x1);
+        break;
+    case -2:
+        strcpy(str,tinfo_strerrno());
+        break;
+    case 0:
+        strcpy(str,tinfo_stringfy(&this->account));
+        break;
+    default:
+        break;
+    }
+    return this->str;
+}
+
+std::ostream & operator<< (std::ostream & cout, tinfo &ti)
+{
+    cout << ti.toString();
+    return cout;
+}
+
+#endif
+
+/*C++部分结束*/
 /*以下为许可声明*/
 
 /* 
@@ -110,8 +205,4 @@ EXPORT int tinfo_clear(void * point);
 /*头文件到此结束*/
 
 #define TINFO
-#endif
-
-#ifdef __cplusplus
-}
 #endif
