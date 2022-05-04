@@ -11,17 +11,23 @@
 #endif
 
 /*目标平台检测*/
+#ifndef TINFO_PLATFORM
 #ifdef __MACH__
 #define TINFO_PLATFORM "MacOS"
 #endif
 #ifdef linux
+#ifdef __ANDROID__
+#define TINFO_PLATFORM "Android"
+#else
 #define TINFO_PLATFORM "Linux"
+#endif
 #endif
 #ifdef WIN32
 #define TINFO_PLATFORM "Windows"
 #endif
 #ifndef TINFO_PLATFORM
 #define TINFO_PLATFORM "Unknown System"
+#endif
 #endif
 
 /*调试函数宏定义*/
@@ -38,7 +44,7 @@
 #endif
 
 /*字符串常量宏定义*/
-#define TINFO_VERSION_STR "LIBTINFO " TINFO_MAIN_VERSION_STR "." TINFO_SUB_VERSION_STR " on " TINFO_PLATFORM
+#define TINFO_VERSION_STR "LIBTINFO " TINFO_MAIN_VERSION_STR "." TINFO_SUB_VERSION_STR "(" TINFO_PLATFORM ")"
 
 #define STRING_STDSIZE 257
 #define MEMORY_STDSIZE 1024*1024
@@ -90,9 +96,18 @@ void * TINFO_REALLOC(void *ptr,int SIZE){
     }
 }
 
+#ifdef __ANDROID__
+char * getpass(const char * __prompt){
+    #define PASS_LEN_MAX 64
+    static char __pwd[PASS_LEN_MAX]={0};
+    printf("%s", __prompt);
+    scanf("%s",__pwd);
+    return __pwd;
+}
+#endif
+
 char * tinfo_getpass(const char * __prompt){
     #ifdef WIN32
-    #include <conio.h>
     #define PASS_LEN_MAX 64
     printf("%s", __prompt);
     static char __pwd[PASS_LEN_MAX]={0};
@@ -100,15 +115,18 @@ char * tinfo_getpass(const char * __prompt){
     while(__ptr < __pwd + PASS_LEN_MAX){
         *__ptr=getch();
         if(*__ptr==13){
+            *__ptr='\0';
             printf("\n");
             break;
         }
         if(*__ptr=='\b'){
             *__ptr='\0';
             if(__ptr > __pwd){
+                printf("\b \b");
                 __ptr--;
             }
         }else{
+            printf("*");
             __ptr++;
         }
     }
@@ -208,11 +226,6 @@ char * URLEncode(char * from){
     }else{
     }
     return NULL;
-}
-
-static int tinfo_write_data(void * ptr,size_t size,size_t nmemb,void * stream){
-    size_t written = fwrite(ptr,size,nmemb,(FILE *)stream);
-    return written;
 }
 
 size_t tinfo_curl2memory(char *buffer,size_t size,size_t nitems,void *userdata){

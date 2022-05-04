@@ -11,10 +11,6 @@
 
 /*宏定义部分*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef TINFO_H
 #define TINFO_H
 
@@ -39,6 +35,9 @@ extern "C" {
 #define EXPORT
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*宏定义部分结束*/
 
 /*TINFO标准错误码,如果出现异常,错误码将会出现在本变量中*/
@@ -118,6 +117,8 @@ public:
     tinfo(char * usr,char * pwd);
     int verify();
     char * toString();
+    char * getAttribute(const char * attribute);
+    char * operator[](const char * attribute);
     friend std::ostream & operator<< (std::ostream & cout, const tinfo &ti);
     ~tinfo();
 };
@@ -175,6 +176,30 @@ char * tinfo::toString()
         break;
     }
     return this->str;
+}
+
+char * tinfo::getAttribute(const char * attribute)
+{
+    if(this->status!=0){
+        return NULL;
+    }
+    if(strcmp(attribute,"real_name")==0){
+        return this->account.real_name;
+    }else if(strcmp(attribute,"phone_number")==0){
+        return this->account.phone_number;
+    }else if(strcmp(attribute,"department")==0){
+        return this->account.department;
+    }else if(strcmp(attribute,"user_id")==0){
+        return this->account.user_id;
+    }else if(strcmp(attribute,"user_name")==0){
+        return this->account.user_name;
+    }
+    return NULL;
+}
+
+char * tinfo::operator[](const char * attribute)
+{
+    return this->getAttribute(attribute);
 }
 
 std::ostream & operator<< (std::ostream & cout, tinfo &ti)

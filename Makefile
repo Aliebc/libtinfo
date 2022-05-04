@@ -1,37 +1,70 @@
 # LIBTINFO MAKEFILE
-# For Darwin Universal (x86_64 and arm64)
+# For MacOS/Windows/Linux
 # Copyright (C) 2022 LIBTINFO
 # By Aliebc
 
-CC=clang
-LIPO=lipo
-INSTALL_PREFIX=/usr/local/lib
-CURL_PATH=/usr
-CURL_LIBRARY_PATH=$(CURL_PATH)/lib
-CURL_INCLUDE_PATH=$(CURL_PATH)/include
-CFLAGS= -std=c99 -I.  -I$(CURL_INCLUDE_PATH) -L$(CURL_LIBRARY_PATH) -lcurl -shared -fPIC -O3
-TARGET_NAME=libtinfo
-TARGET_SUFFIX=dylib
-X64_TARGET=TMP_X64/$(TARGET_NAME).$(TARGET_SUFFIX)
-ARM64_TARGET=TMP_ARM64/$(TARGET_NAME).$(TARGET_SUFFIX)
-TARGET=$(TARGET_NAME).$(TARGET_SUFFIX)
-CFILE=tinfo.c cJSON.c
-EXPFILE=example.c
-EXP_CFLAGS= -I. -L. -L$(CURL_LIBRARY_PATH) -lcurl -ltinfo 
+CC=gcc
+PRE_BUILD=pre-build/
+RM=/bin/rm
+CP=cp
+TAR=tar
+MKDIR=mkdir
+HOST=$(shell $(CC) -dumpmachine)
+LIBEXT=
+SLIBEXT=
+CURL_DIR=
+CURL_CFLAGS=-DCURL_STATICLIB $(shell $(CURL_DIR)/bin/curl-config --static-libs)
+CURL_INCLUDE=$(shell $(CURL_DIR)/bin/curl-config --prefix)/include
+OPENSSL_DIR=
+TINFO_CFLAGS='-DTINFO_PLATFORM="$(HOST)"'
+CFLAGS=
+U_CFLAGS=-fPIC -O2 -Wall
+ARCH=$(shell arch)
+LDFLAGS=
+D_NAME=libtinfo
+ifneq (,$(findstring darwin,$(HOST)))
+LIBEXT=dylib
+SLIBEXT=a
+DYLD_RNAME=$(D_NAME)-1_1.$(LIBEXT)
+DYLD_NAME=$(PRE_BUILD)lib/$(D_NAME).$(LIBEXT)
+endif
+ifneq (,$(findstring linux,$(HOST)))
+LIBEXT=so
+SLIBEXT=a
+DYLD_RNAME=$(D_NAME)-1_1.$(LIBEXT)
+DYLD_NAME=$(PRE_BUILD)lib/$(D_NAME).$(LIBEXT)
+endif
+ifneq (,$(findstring mingw32,$(HOST)))
+LIBEXT=dll
+SLIBEXT=dll.a
+DYLD_RNAME=$(D_NAME)-1_1.$(LIBEXT)
+DYLD_NAME=$(PRE_BUILD)bin/$(D_NAME)-1_1.$(LIBEXT)
+LDFLAGS=-Wl,--out-implib,$(PRE_BUILD)lib/libtinfo.$(SLIBEXT)
+endif
+INSTALL_DIR=/usr/local/
 
-$(TARGET):$(CFILE)
-	mkdir -p TMP_X64
-	mkdir -p TMP_ARM64
-	$(CC) -o $(X64_TARGET) $(CFILE) $(CFLAGS) --target=x86_64-apple-darwin
-	$(CC) -o $(ARM64_TARGET) $(CFILE) $(CFLAGS) --target=arm64-apple-darwin
-	$(LIPO) -create -output $(TARGET) $(X64_TARGET) $(ARM64_TARGET)
-	-$(RM) $(X64_TARGET)
-	-$(RM) $(ARM64_TARGET)
-	$(CC) -o example $(EXPFILE) $(EXP_CFLAGS)
-
-clean:
-	-$(RM) $(TARGET)
-	-$(RM) example
+build:
+	$(MKDIR) -p $(PRE_BUILD) $(PRE_BUILD)bin $(PRE_BUILD)lib $(PRE_BUILD)include $(PRE_BUILD)share
+	$(CC) -I. -I $(CURL_INCLUDE) tinfo.c cJSON.c -o $(DYLD_NAME) -shared $(U_CFLAGS) $(TINFO_CFLAGS) $(CURL_CFLAGS) $(CFLAGS)\
+	$(LDFLAGS)
+	cp tinfo.h $(PRE_BUILD)include
+	$(CC) example.c -I $(PRE_BUILD)include -L $(PRE_BUILD)lib -ltinfo  -o $(PRE_BUILD)bin/tinfo
 
 install:
-	cp $(TARGET) $(INSTALL_PREFIX)
+	$(CP) $(PRE_BUILD)bin/* $(INSTALL_DIR)bin
+	$(CP) $(PRE_BUILD)include/* $(INSTALL_DIR)include
+	$(CP) $(PRE_BUILD)lib/* $(INSTALL_DIR)lib
+	$(CP) $(PRE_BUILD)share/* $(INSTALL_DIR)share
+
+clean:
+	$(RM) -rf $(PRE_BUILD)
+
+remove:
+	$(RM) -f $(INSTALL_DIR)bin/tinfo
+	$(RM) -f $(INSTALL_DIR)include/tinfo.h
+	$(RM) -f $(INSTALL_DIR)lib/$(DYLD_RNAME)
+
+dist:
+	mv $(PRE_BUILD) libtinfo-$(HOST)
+	$(TAR) -czvf libtinfo-$(HOST).tar.gz libtinfo-$(HOST)/
+	mv libtinfo-$(HOST) $(PRE_BUILD)
